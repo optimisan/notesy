@@ -21,7 +21,7 @@ class GenerateRoute {
       case '/note':
         {
           try {
-            final note = (settings.arguments as Map ?? {})['note'];
+            final note = (settings.arguments as Map)['note'];
             return _buildRoute(settings, (_) => NoteEditor(note: note));
           } catch (e) {
             return _buildRoute(settings, (_) => NoteEditor());

@@ -1,12 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:notesy/models/home_model.dart';
 import 'package:notesy/routes.dart';
 import 'package:notesy/screens/notes_page.dart';
 import 'package:notesy/services/authentication.dart';
+import 'package:notesy/services/note_service.dart';
 import 'package:provider/provider.dart';
 import 'screens/home_page.dart';
+
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +34,13 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Notesy',
-        theme: ThemeData.dark(),
+        // theme: ThemeData.dark(),
+        theme: ThemeData(
+          textTheme: GoogleFonts.ubuntuTextTheme(
+            Theme.of(context).textTheme,
+          ),
+          brightness: Brightness.dark,
+        ),
         initialRoute: '/',
         onGenerateRoute: GenerateRoute.generateRoute,
         routes: <String, WidgetBuilder>{
@@ -58,7 +68,7 @@ class AuthenticationWrapper extends StatelessWidget {
     final firebaseUser = context.watch<User?>();
     if (firebaseUser != null) {
       try {
-        return NotesPage();
+        return ChangeNotifierProvider(create: (context) => NoteService(), child: NotesPage());
       } catch (e) {
         print(e);
         return Scaffold(body: SafeArea(child: Text("Hello")));

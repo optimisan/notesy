@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:notesy/services/authentication.dart';
 import 'package:notesy/widgets/text_field.dart';
 import 'package:notesy/widgets/custom_button.dart';
@@ -43,6 +44,7 @@ class HomePage extends StatelessWidget {
                 Text(
                   'Notesy',
                   style: TextStyle(
+                    fontFamily: 'Ubuntu',
                     color: Colors.white,
                     fontSize: 50.0,
                     fontWeight: FontWeight.w300,

@@ -16,14 +16,14 @@ class NoteItem extends StatelessWidget {
   Widget build(BuildContext context) => Hero(
         tag: 'NoteItem${note.id}',
         child: DefaultTextStyle(
-          style: kNoteTextLight,
+          style: kNoteTextInnerDark,
           child: Container(
             decoration: BoxDecoration(
               color: note.color == null ? kDefaultNoteColor : HexColor(hexColor: note.color!),
-              borderRadius: BorderRadius.all(Radius.circular(8)),
+              borderRadius: BorderRadius.all(Radius.circular(16)),
               // border: note.color.value == 0xFFFFFFFF ? Border.all(color: kBorderColorLight) : null,
             ),
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -32,12 +32,31 @@ class NoteItem extends StatelessWidget {
                   Text(
                     note.title!,
                     style: kCardTitleLight,
-                    maxLines: 1,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                if (note.title?.isNotEmpty == true) const SizedBox(height: 14),
-                Flexible(
-                  flex: 1,
-                  child: Text(note.content ?? ''), // wrapping using a Flexible to avoid overflow
+                if (note.title?.isNotEmpty == true) const SizedBox(height: 8),
+                if (note.content?.isNotEmpty == true)
+                  Flexible(
+                    flex: 1,
+                    child: Text(
+                      note.content ?? '',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 8,
+                      style: const TextStyle(fontSize: 15.0),
+                    ), // wrapping using a Flexible to avoid overflow
+                  ),
+                SizedBox(height: 12.0),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ...?note.labelsToShow(showLabels: true),
+                  ],
+                ),
+                SizedBox(height: 12.0),
+                Text(
+                  note.strCreatedAt,
+                  style: TextStyle(fontSize: 12.0),
                 ),
               ],
             ),

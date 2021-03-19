@@ -3,11 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:notesy/models/note_model.dart';
 
-class NoteService {
+class OldNoteService with ChangeNotifier {
   final _userId = FirebaseAuth.instance.currentUser?.uid;
 
   late var _collection; //FirebaseFirestore.instance.collection(_userId!);
-  NoteService() {
+  OldNoteService() {
     _collection = FirebaseFirestore.instance.collection(_userId!);
     LoggedInUser._userId = _userId;
   }
@@ -37,6 +37,11 @@ extension NoteStore on Note {
   Future<dynamic> saveToFireStore(String uid) async {
     final collection = FirebaseFirestore.instance.collection('notes-$uid');
     return id == null ? collection.add(toJson()) : collection.doc(id).update(toJson());
+  }
+
+  Future<dynamic> deleteFromFireStore(String uid) async {
+    final collection = FirebaseFirestore.instance.collection('notes-$uid');
+    return id == null ? Future.value(null) : collection.doc(id).delete();
   }
 }
 

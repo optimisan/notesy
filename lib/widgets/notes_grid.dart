@@ -1,46 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:notesy/models/note_model.dart';
-// import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:notesy/widgets/note_card.dart';
 
-class DebugGrid extends StatelessWidget {
-  // final length;
-  // final List<Note?>? notes;
-  // DebugGrid(this.length, this.notes);
+class NotesStagGrid extends StatelessWidget {
+  final List<Note?>? notes;
+  final void Function(Note?) onTap;
+  final int length;
+  final int fit;
+  final double padding;
+  NotesStagGrid(
+      {required this.notes,
+      required this.onTap,
+      required this.length,
+      this.fit = 1,
+      this.padding = 12});
+
   @override
   Widget build(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      sliver: SliverGrid.count(
-        crossAxisCount: 2,
-        children: [
-          Card(
-            child: Text("Notesy "), //$length"),
-          )
-        ],
-      ),
-      // sliver: SliverGrid(
-      //   delegate: SliverChildBuilderDelegate(
-      //     (BuildContext context, int index) {
-      //       return Card(
-      //         child: Column(
-      //           children: [
-      //             Text(
-      //                 "Notesy length: ${notes!.length} index: $index title: ${notes![index]!.title} Color: ${notes![index]!.color}"),
-      //             NotesGrid._debugNoteItem(context, notes![index]),
-      //           ],
-      //         ),
-      //       );
-      //     },
-      //     childCount: length,
-      //   ),
-      //   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-      //     maxCrossAxisExtent: 200.0,
-      //     mainAxisSpacing: 10.0,
-      //     crossAxisSpacing: 10.0,
-      //     childAspectRatio: 1 / 1.2,
-      //   ),
-      // ),
+      padding: EdgeInsets.symmetric(horizontal: padding),
+      sliver: SliverStaggeredGrid.countBuilder(
+          mainAxisSpacing: 20.0,
+          crossAxisSpacing: 15.0,
+          crossAxisCount: 2,
+          staggeredTileBuilder: (index) => StaggeredTile.fit(fit),
+          itemBuilder: (context, index) => InkWell(
+                onTap: () => onTap.call(notes?[index]),
+                child: NoteItem(note: notes![index]!),
+              ),
+          itemCount: length),
     );
   }
 }
@@ -67,9 +56,7 @@ class NotesGrid extends StatelessWidget {
           ),
         ),
       );
-  static Widget _debugNoteItem(BuildContext context, Note? note) => InkWell(
-        child: NoteItem(note: note!),
-      );
+
   Widget _noteItem(BuildContext context, Note? note) => InkWell(
         onTap: () => onTap.call(note),
         child: NoteItem(note: note!),

@@ -24,6 +24,7 @@ const kCheckedLabelBackgroudLight = Color(0x337E39FB);
 const kHintTextColorLight = Color(0xFF61656A);
 const kNoteTitleColorLight = Color(0xFF202124);
 const kNoteTextColorLight = Color(0x99000000);
+const kNoteTextColorDark = Color(0xFFD0DADA);
 const kNoteDetailTextColorLight = Color(0xC2000000);
 const kErrorColorLight = Color(0xFFD43131);
 const kWarnColorLight = Color(0xFFFD9726);
@@ -50,25 +51,25 @@ const kAccentColorLight = MaterialColor(
 
 /// Available note background colors
 const Iterable<Color> kNoteColors = [
-  Colors.white,
-  Color(0xFFF28C82),
-  Color(0xFFFABD03),
-  Color(0xFFFFF476),
-  Color(0xFFCDFF90),
-  Color(0xFFA7FEEB),
-  Color(0xFFCBF0F8),
-  Color(0xFFAFCBFA),
-  Color(0xFFD7AEFC),
-  Color(0xFFFDCFE9),
-  Color(0xFFE6C9A9),
-  Color(0xFFE9EAEE),
+  Color(0xFF272636),
+  Color(0xFFa61e11),
+  Color(0xFF8a6801),
+  Color(0xFFabad00),
+  Color(0xFF73d100),
+  Color(0xFF02ca9e),
+  Color(0xFF005542),
+  Color(0xFF570461),
+  // Color(0xFFFDCFE9),
+  // Color(0xFFE6C9A9),
+  // Color(0xFFE9EAEE),
 ];
 final kDefaultNoteColor = kNoteColors.first;
 
 /// [TextStyle] for note title in a preview card
 const kCardTitleLight = TextStyle(
-  color: kNoteTitleColorLight,
-  fontSize: 16,
+  // color: kNoteTitleColorLight,
+  color: Color(0xFFf8f8f9),
+  fontSize: 18,
   height: 19 / 16,
   fontWeight: FontWeights.medium,
 );
@@ -84,6 +85,13 @@ const kNoteTitleLight = TextStyle(
 /// [TextStyle] for text notes
 const kNoteTextLight = TextStyle(
   color: kNoteTextColorLight,
+  fontSize: 16,
+  height: 1.3125,
+);
+
+///[TextStyle] for dark notes
+const kNoteTextInnerDark = TextStyle(
+  color: kNoteTextColorDark,
   fontSize: 16,
   height: 1.3125,
 );
@@ -108,3 +116,16 @@ const kChecklistTextLargeLight = TextStyle(
   fontSize: 18,
   height: 16 / 14,
 );
+
+Color darken(Color c, [int percent = 10]) {
+  assert(1 <= percent && percent <= 100);
+  var f = 1 - percent / 100;
+  return Color.fromARGB(c.alpha, (c.red * f).round(), (c.green * f).round(), (c.blue * f).round());
+}
+
+Color brighten(Color c, [int percent = 10]) {
+  assert(1 <= percent && percent <= 100);
+  var p = percent / 100;
+  return Color.fromARGB(c.alpha, c.red + ((255 - c.red) * p).round(),
+      c.green + ((255 - c.green) * p).round(), c.blue + ((255 - c.blue) * p).round());
+}

@@ -2,7 +2,11 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:notesy/models/note_model.dart';
+import 'package:notesy/services/text_editor_service.dart';
+import 'package:notesy/widgets/note_card.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:notesy/services/add_note.dart';
@@ -19,14 +23,20 @@ class NoteEditor extends StatefulWidget {
 class _NoteEditorState extends State<NoteEditor> {
   late final Note? _note;
   late final Note? _originalNote;
+  late bool showDelete;
+  late Color noteColor;
   _NoteEditorState(Note? note) {
-    print('In edit page constructor: id: ${note?.id}');
+    print('In edit page constructor: color: ${note?.color}');
+    this.showDelete = note != null;
     this._note = note ?? Note();
     this._originalNote = note?.copy() ?? Note();
-    print("In edit page constructor: originalNoteId: ${this._originalNote?.id}");
-    this._titleTextController = TextEditingController(text: note?.title);
-    this._contentTextController = TextEditingController(text: note?.content);
-    print("In edit page constructor: ${this._note == null}");
+    this.noteColor = _note?.color == null ? Color(0xFF1f1d2a) : HexColor(hexColor: _note!.color!);
+    print(
+        "In edit page constructor: originalNoteId: ${this._originalNote?.id} and contentOrig = ${this._originalNote?.content}");
+    // this._titleTextController = TextEditingController(text: note?.title);
+    this._titleTextController = TextFieldColorizer(colorControlMap, text: note?.title);
+    this._contentTextController = TextFieldColorizer(colorControlMap, text: note?.content);
+    print("In edit page constructor: ${this._originalNote?.color}");
   }
   // _NoteEditorState(Note? note)
   //     : this._note = note ?? Note(),
@@ -34,7 +44,9 @@ class _NoteEditorState extends State<NoteEditor> {
   //       this._titleTextController = TextEditingController(text: note?.title),
   //       this._contentTextController = TextEditingController(text: note?.content);
 
-  //Color get _noteColor => HexColor(hexColor: _note!.color!);
+  Color get _noteColor => _note?.color == null || _note?.color == "ff272636"
+      ? Color(0xFF1f1d2a)
+      : HexColor(hexColor: _note!.color!);
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   StreamSubscription<Note?>? _noteSubscription;
@@ -50,7 +62,10 @@ class _NoteEditorState extends State<NoteEditor> {
   void initState() {
     super.initState();
     _titleTextController.addListener(() => _note!.title = _titleTextController.text);
-    _contentTextController.addListener(() => _note!.content = _contentTextController.text);
+    _contentTextController.addListener(() {
+      _note!.content = _contentTextController.text;
+      _note?.getWordCount();
+    });
   }
 
   @override
@@ -70,12 +85,55 @@ class _NoteEditorState extends State<NoteEditor> {
       child: Consumer<Note?>(
         builder: (_, __, ___) => Hero(
           tag: 'NoteItem${_note?.id}',
-          child: Scaffold(
-            key: _scaffoldKey,
-            appBar: AppBar(
-              title: Text("Note Editor"),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              primaryColor: _noteColor,
+              appBarTheme: Theme.of(context).appBarTheme.copyWith(
+                    elevation: 0,
+                  ),
+              scaffoldBackgroundColor: _noteColor,
+              bottomAppBarColor: _noteColor,
             ),
-            body: _buildBody(context, uid!),
+            child: AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle.dark.copyWith(
+                statusBarColor: _noteColor,
+                systemNavigationBarColor: _noteColor,
+                systemNavigationBarIconBrightness: Brightness.light,
+              ),
+              child: WillPopScope(
+                onWillPop: () => _onPop(uid!),
+                child: Scaffold(
+                  key: _scaffoldKey,
+                  appBar: AppBar(
+                    automaticallyImplyLeading: false,
+                    leading: IconButton(
+                      onPressed: () {
+                        _onPop(uid!);
+                        Navigator.pop(context);
+                      },
+                      icon: _isDirty ? Icon(Icons.check) : Icon(Icons.arrow_back),
+                      tooltip: _isDirty ? "Save and exit" : "Exit",
+                    ),
+                    title: Text(
+                      // _note == null || _note?.title == null ? '' : _note!.title!,
+                      'Note',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    actions: _noteActions(context, uid),
+                    bottom: const PreferredSize(
+                      preferredSize: Size(0, 18),
+                      child: SizedBox(),
+                    ),
+                  ),
+                  body: _buildBody(context, uid!),
+                  bottomNavigationBar: _buildBottomAppBar(context),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -84,21 +142,19 @@ class _NoteEditorState extends State<NoteEditor> {
 
   Widget _buildBody(BuildContext context, String uid) => DefaultTextStyle(
         style: TextStyle(),
-        child: WillPopScope(
-          onWillPop: () => _onPop(uid),
-          child: Container(
-            height: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: SingleChildScrollView(
-              child: _buildNoteDetail(),
-            ),
+        child: Container(
+          height: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: SingleChildScrollView(
+            child: _buildNoteDetail(),
           ),
         ),
       );
 
   Future<bool> _onPop(String uid) {
-    print("Save function ${_note?.id}");
+    print("Inside saveFunction: $_isDirty");
     if (_isDirty && (_note?.id != null || _note!.isNotEmpty)) {
+      print("Saving, color is ${this._note?.color}");
       _note!
         ..modifiedAt = DateTime.now()
         ..saveToFireStore(uid);
@@ -106,19 +162,80 @@ class _NoteEditorState extends State<NoteEditor> {
     return Future.value(true);
   }
 
+  Future<bool> _deleteNote(String? uid) async {
+    await _note!.deleteFromFireStore(uid!);
+    return Future.value(true);
+  }
+
+  List<Widget> _noteActions(BuildContext context, String? uid) {
+    if (uid == null)
+      return [Text('Error')];
+    else
+      return [
+        IconButton(
+          icon: Icon(Icons.color_lens_outlined),
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  contentTextStyle: const TextStyle(color: const Color(0xFFFEFEFE)),
+                  title: Text(
+                    'Select a color',
+                    style: TextStyle(color: const Color(0xFFFEFEFE), fontWeight: FontWeight.w300),
+                  ),
+                  content: SingleChildScrollView(
+                    child: BlockPicker(
+                      availableColors: kNoteColors.toList(),
+                      pickerColor: _noteColor,
+                      onColorChanged: (color) {
+                        if (color.value.toRadixString(16) == "ff272636")
+                          this._note?.updateWith(color: null);
+                        else
+                          this._note?.updateWith(color: color.value.toRadixString(16));
+                      },
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          tooltip: "Color",
+        ),
+        if (showDelete)
+          IconButton(
+            tooltip: "Undo",
+            icon: Icon(
+              Icons.undo,
+              color: Colors.grey.shade200,
+            ),
+            onPressed: _undoAllChanges,
+          ),
+        if (showDelete)
+          IconButton(
+              tooltip: "Delete",
+              icon: Icon(
+                Icons.delete,
+                color: Colors.red.shade400,
+              ),
+              onPressed: () {
+                _deleteNote(uid).then((value) => print("Note deleted"));
+                Navigator.pop(context);
+              }),
+      ];
+  }
+
   Widget _buildNoteDetail() => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           TextField(
-            onChanged: (value) {
-              print(
-                  "_isDirty = $_isDirty and note==origNote is ${_note!.title == _originalNote!.title}");
-              print("orig title = ${_originalNote!.title}");
-            },
+            // onChanged: (value) {
+            //   print(
+            //       "_isDirty = $_isDirty and note==origNote is ${_note!.title == _originalNote!.title}");
+            //   print("orig title = ${_originalNote!.title}");
+            // },
             controller: _titleTextController,
-            style: TextStyle(
-              color: Colors.white,
-            ), //kNoteTitleLight,
+            style: TextStyle(color: Colors.white, fontSize: 22.0), //kNoteTitleLight,
             decoration: const InputDecoration(
               hintText: 'Title',
               border: InputBorder.none,
@@ -126,20 +243,109 @@ class _NoteEditorState extends State<NoteEditor> {
             ),
             maxLines: null,
             maxLength: 1024,
-            textCapitalization: TextCapitalization.sentences,
+            textCapitalization: TextCapitalization.words,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 24),
+          Wrap(children: [
+            Text(
+              "${_note?.strLastModified}. ${_note?.strLastModifiedHM} ${_note?.strLastModifiedDay.substring(0, 3)} | ${WordCount.wordCount(_note?.content)} words",
+              style: TextStyle(
+                // color: const Color(0xFF9a9aaa),
+                color: Colors.grey.shade400,
+              ),
+            ),
+          ]),
+          const SizedBox(height: 24),
           TextField(
+            onChanged: (value) {
+              AddLabel.withThis(value, _note!);
+            },
+            keyboardType: TextInputType.multiline,
             controller: _contentTextController,
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.grey.shade300,
+              height: 1.5,
             ), //kNoteTextLargeLight,
             decoration: const InputDecoration.collapsed(hintText: 'Take your note...'),
             maxLines: null,
             textCapitalization: TextCapitalization.sentences,
           ),
+          const SizedBox(height: 24),
+          Wrap(
+            // children: [...?_note?.labelsToShow(showLabels: true)],
+            children: [...?_note?.labelsHere],
+          )
         ],
       );
+
+  Widget _buildBottomAppBar(BuildContext context) => BottomAppBar(
+        child: Container(
+          height: kBottomBarSize,
+          padding: const EdgeInsets.symmetric(horizontal: 9),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.add_box),
+                color: kIconTintLight,
+                onPressed: () {},
+              ),
+              // Text(
+              //   'Edited ${_note?.strLastModified}',
+              //   style: TextStyle(
+              //     color: Color(0xAAFEFEFE),
+              //     fontSize: 12.0,
+              //   ),
+              // ),
+              IconButton(
+                icon: const Icon(Icons.more_vert),
+                color: kIconTintLight,
+                onPressed: () => _showNoteBottomSheet(context),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  void _showNoteBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: noteColor,
+      builder: (context) => ChangeNotifierProvider.value(
+        value: _note,
+        child: Consumer<Note?>(
+          builder: (_, note, __) => Container(
+            color: note?.color == null ? kDefaultNoteColor : HexColor(hexColor: note!.color!),
+            padding: const EdgeInsets.symmetric(vertical: 19),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                // NoteActions(),
+                const SizedBox(height: 16),
+                // LinearColorPicker(),
+                Text("Colors picker here"),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    // if (command != null) {
+    //   if (command.dismiss) {
+    //     Navigator.pop(context, command);
+    //   } else {
+    //     processNoteCommand(_scaffoldKey.currentState, command);
+    //   }
+    // }
+  }
+
+  void _undoAllChanges() {
+    print("modified: ${_note?.strLastModified} created: ${_note?.strCreatedAt}");
+    _note?.update(_originalNote, updateTimestamp: false);
+    _titleTextController.text = _note?.title ?? '';
+    _contentTextController.text = _note?.content ?? '';
+  }
 
   void _watchNoteDocument(String? uid) {
     if (_noteSubscription == null && uid != null && _note?.id != null) {
@@ -153,6 +359,7 @@ class _NoteEditorState extends State<NoteEditor> {
         return snapshot.exists ? snapshot.toNote() : null;
       }).listen((note) {
         print(note?.title);
+        //_onCloudNoteUpdated(note);
       });
     }
   }
@@ -186,6 +393,7 @@ class _NoteEditorState extends State<NoteEditor> {
     }
   }
 }
+
 // class NotesAddPage extends StatefulWidget {
 //   @override
 //   _NotesAddPageState createState() => _NotesAddPageState();
