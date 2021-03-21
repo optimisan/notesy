@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:notesy/services/authentication.dart';
 import 'package:notesy/widgets/text_field.dart';
 import 'package:notesy/widgets/custom_button.dart';

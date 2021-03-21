@@ -65,34 +65,40 @@ class SideBarDrawer extends StatelessWidget {
                   //     .toList(),
                   ...?listTiles,
                   ListTile(
+                    leading: Icon(
+                      Icons.create,
+                      color: const Color(0xFFFEFEFE),
+                    ),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    title: Text("Add Labels", style: TextStyle(color: Colors.grey)),
+                    title: Text("Edit Labels", style: TextStyle(color: Colors.grey)),
                     onTap: () {
-                      showModalBottomSheet<void>(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return Column(
-                              children: [
-                                SizedBox(
-                                  height: 50.0,
-                                ),
-                                TextField(
-                                  onChanged: (value) {
-                                    label = value;
-                                  },
-                                ),
-                                SizedBox(
-                                  height: 20.0,
-                                ),
-                                ElevatedButton(
-                                    onPressed: () {
-                                      print(label);
-                                      Navigator.pop(context);
-                                    },
-                                    child: Text("Add"))
-                              ],
-                            );
-                          });
+                      Navigator.pushNamed(context, '/labels');
+                      // showModalBottomSheet<void>(
+                      //   context: context,
+                      //   builder: (BuildContext context) {
+                      //     return Column(
+                      //       children: [
+                      //         SizedBox(
+                      //           height: 50.0,
+                      //         ),
+                      //         TextField(
+                      //           onChanged: (value) {
+                      //             label = value;
+                      //           },
+                      //         ),
+                      //         SizedBox(
+                      //           height: 20.0,
+                      //         ),
+                      //         ElevatedButton(
+                      //             onPressed: () {
+                      //               print(label);
+                      //               Navigator.pop(context);
+                      //             },
+                      //             child: Text("Add"))
+                      //       ],
+                      //     );
+                      //   },
+                      // );
                     },
                   ),
                   ListTile(
@@ -105,6 +111,32 @@ class SideBarDrawer extends StatelessWidget {
                       context.read<AuthenticationService>().signOut();
                     },
                   ),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    leading: Icon(Icons.info, color: const Color(0xFFFEFEFE)),
+                    title: Text(
+                      "About",
+                      style: const TextStyle(color: const Color(0xFFFEFEFE)),
+                    ),
+                    tileColor: Colors.blue,
+                    onTap: () {
+                      showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                                title: Text(
+                                  "Notesy by Akshat",
+                                  style: const TextStyle(color: const Color(0xFFFEFEFE)),
+                                ),
+                                contentTextStyle: const TextStyle(color: const Color(0xFFFEFEFE)),
+                                content: Column(
+                                  children: [
+                                    Text("Version 1.2.0"),
+                                    Text("New features coming soon!"),
+                                  ],
+                                ),
+                              ));
+                    },
+                  )
                 ],
               ),
             ),
@@ -133,8 +165,8 @@ class SideBarDrawer extends StatelessWidget {
     final uid = Provider.of<User?>(context)?.uid;
     return FirebaseFirestore.instance
         .collection("notes-$uid")
-        .doc("labels")
-        .collection("notes-collection")
+        .doc("user-data")
+        .collection("labels-collection")
         .snapshots()
         .map((snapshot) => _toListTileList(context, snapshot));
   }

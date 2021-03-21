@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:notesy/screens/labels_screen.dart';
 import 'package:notesy/screens/note_editor_page.dart';
+import 'package:notesy/services/note_service.dart';
+import 'package:provider/provider.dart';
 
 class GenerateRoute {
   static Route? generateRoute(RouteSettings settings) {
@@ -25,6 +28,22 @@ class GenerateRoute {
             return _buildRoute(settings, (_) => NoteEditor(note: note));
           } catch (e) {
             return _buildRoute(settings, (_) => NoteEditor());
+          }
+        }
+      case '/labels':
+        {
+          try {
+            // final labelList = (settings.arguments as Map)['labels'];
+            return _buildRoute(
+                settings,
+                (_) => ChangeNotifierProvider(
+                    create: (context) => NoteService(), child: LabelScreen()));
+          } catch (e) {
+            print(e.toString());
+            return _buildRoute(
+                settings,
+                (_) => ChangeNotifierProvider(
+                    create: (context) => NoteService(), child: LabelScreen()));
           }
         }
       default:

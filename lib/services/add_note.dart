@@ -43,6 +43,25 @@ extension NoteStore on Note {
     final collection = FirebaseFirestore.instance.collection('notes-$uid');
     return id == null ? Future.value(null) : collection.doc(id).delete();
   }
+
+  Future<dynamic> addReminder(String? uid) async {
+    if (uid != null) {
+      final collection = FirebaseFirestore.instance.collection('notes-$uid');
+      return id == null
+          ? Future.value(null)
+          : collection.doc(id).update({'remindAt': remindAt?.millisecondsSinceEpoch});
+    } else
+      return Future.value(false);
+  }
+
+  Future<dynamic> deleteReminder(String? uid) async {
+    if (uid != null) {
+      this.deleteLocalReminder();
+      final collection = FirebaseFirestore.instance.collection('notes-$uid');
+      return id == null ? Future.value(null) : collection.doc(id).update({'remindAt': 0});
+    } else
+      return Future.value(false);
+  }
 }
 
 class LoggedInUser {

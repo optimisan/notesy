@@ -54,9 +54,32 @@ class NoteItem extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: 12.0),
-                Text(
-                  note.strCreatedAt,
-                  style: TextStyle(fontSize: 12.0),
+                // if (note.reminderExists)
+                //   Row(
+                //     mainAxisSize: MainAxisSize.min,
+                //     children: [
+                //       Container(
+                //         padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
+                //         decoration: BoxDecoration(
+                //           color: Color(0xAAADADAD),
+                //           borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                //         ),
+                //         child: Icon(
+                //           Icons.alarm,
+                //           size: 18.0,
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      note.strCreatedAt,
+                      style: const TextStyle(fontSize: 12.0),
+                    ),
+                    if (note.reminderExists) Icon(Icons.alarm, size: 18.0),
+                  ],
                 ),
               ],
             ),

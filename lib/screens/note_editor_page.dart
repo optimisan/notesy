@@ -1,16 +1,18 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:notesy/models/note_model.dart';
+import 'package:notesy/services/notifications_service.dart';
 import 'package:notesy/services/text_editor_service.dart';
 import 'package:notesy/widgets/note_card.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:notesy/services/add_note.dart';
-
+import 'package:notesy/widgets/time_picker.dart';
 import '../constants.dart';
 
 class NoteEditor extends StatefulWidget {
@@ -117,7 +119,7 @@ class _NoteEditorState extends State<NoteEditor> {
                     title: Text(
                       // _note == null || _note?.title == null ? '' : _note!.title!,
                       'Note',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         color: Colors.grey,
                         fontWeight: FontWeight.w400,
@@ -130,7 +132,7 @@ class _NoteEditorState extends State<NoteEditor> {
                     ),
                   ),
                   body: _buildBody(context, uid!),
-                  bottomNavigationBar: _buildBottomAppBar(context),
+                  // bottomNavigationBar: _buildBottomAppBar(context),
                 ),
               ),
             ),
@@ -146,13 +148,14 @@ class _NoteEditorState extends State<NoteEditor> {
           height: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: SingleChildScrollView(
-            child: _buildNoteDetail(),
+            child: _buildNoteDetail(uid: uid),
           ),
         ),
       );
 
   Future<bool> _onPop(String uid) {
-    print("Inside saveFunction: $_isDirty");
+    print(
+        "Inside saveFunction: $_isDirty ${_note?.labels?.length}, ${_originalNote?.labels?.length}");
     if (_isDirty && (_note?.id != null || _note!.isNotEmpty)) {
       print("Saving, color is ${this._note?.color}");
       _note!
@@ -172,6 +175,7 @@ class _NoteEditorState extends State<NoteEditor> {
       return [Text('Error')];
     else
       return [
+        TimePicker(this._note, uid),
         IconButton(
           icon: Icon(Icons.color_lens_outlined),
           onPressed: () {
@@ -189,10 +193,10 @@ class _NoteEditorState extends State<NoteEditor> {
                       availableColors: kNoteColors.toList(),
                       pickerColor: _noteColor,
                       onColorChanged: (color) {
-                        if (color.value.toRadixString(16) == "ff272636")
-                          this._note?.updateWith(color: null);
-                        else
-                          this._note?.updateWith(color: color.value.toRadixString(16));
+                        // if (color.value.toRadixString(16) == "ff272636")
+                        //   this._note?.updateWith(color: null);
+                        // else
+                        this._note?.updateWith(color: color.value.toRadixString(16));
                       },
                     ),
                   ),
@@ -225,7 +229,7 @@ class _NoteEditorState extends State<NoteEditor> {
       ];
   }
 
-  Widget _buildNoteDetail() => Column(
+  Widget _buildNoteDetail({String? uid}) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           TextField(
@@ -255,7 +259,45 @@ class _NoteEditorState extends State<NoteEditor> {
               ),
             ),
           ]),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          if (_note?.strRemindAtHM != null)
+            Wrap(
+              children: [
+                InkWell(
+                  onTap: () async {
+                    await NotificationHelper.cancelNotification(_note.hashCode);
+                    if (uid != null) await this._note?.deleteReminder(uid);
+                  },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                    margin: EdgeInsets.only(right: 5.0, top: 8.0),
+                    decoration: BoxDecoration(
+                      color: _note!.reminderExists ? Colors.green.shade700 : Colors.transparent,
+                      borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.alarm_rounded, size: 24.0),
+                        const SizedBox(width: 8.0),
+                        Text(
+                          "${_note?.strRemindAtDate} ${_note?.strRemindAtHM}",
+                          style: TextStyle(
+                            color: const Color(0xCCFAFAFA),
+                            fontSize: 13.2,
+                            decoration: !_note!.reminderExists ? TextDecoration.lineThrough : null,
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Icon(Icons.close_rounded),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          SizedBox(height: _note!.reminderExists ? 20 : 16),
           TextField(
             onChanged: (value) {
               AddLabel.withThis(value, _note!);
@@ -273,7 +315,7 @@ class _NoteEditorState extends State<NoteEditor> {
           const SizedBox(height: 24),
           Wrap(
             // children: [...?_note?.labelsToShow(showLabels: true)],
-            children: [...?_note?.labelsHere],
+            children: [...?_note?.labelsHereFunction(uid)],
           )
         ],
       );
@@ -315,7 +357,7 @@ class _NoteEditorState extends State<NoteEditor> {
         value: _note,
         child: Consumer<Note?>(
           builder: (_, note, __) => Container(
-            color: note?.color == null ? kDefaultNoteColor : HexColor(hexColor: note!.color!),
+            // color: note?.color == null ? kDefaultNoteColor : HexColor(hexColor: note!.color!),
             padding: const EdgeInsets.symmetric(vertical: 19),
             child: Column(
               mainAxisSize: MainAxisSize.min,

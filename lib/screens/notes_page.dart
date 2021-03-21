@@ -32,13 +32,16 @@ class NotesPage extends StatefulWidget {
 class _NotesPageState extends State<NotesPage> {
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
   // final _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
   bool _listView = false;
   @override
   void initState() {
     super.initState();
-    tz.initializeTimeZones();
+    //tz.initializeTimeZones();
+    flutterLocalNotificationsPlugin1 = FlutterLocalNotificationsPlugin();
+    _configureLocalTimeZone();
     var androidInit = AndroidInitializationSettings('ic_launcher');
     var initSetting = InitializationSettings(android: androidInit);
     flutterLocalNotificationsPlugin.initialize(initSetting,
@@ -68,57 +71,60 @@ class _NotesPageState extends State<NotesPage> {
         // initialData: [],
         child: Consumer<NoteService>(
           builder: (_, noteService, __) {
-            return Scaffold(
-              backgroundColor: Color(0xFF1f1d2b),
-              key: _scaffoldKey,
-              drawer: SideBarDrawer(),
-              // appBar: _customAppBar(noteService),
-              floatingActionButton: FloatingActionButton(
-                backgroundColor: (noteService.labelColor == null)
-                    ? Color(0xFF6f6fc8)
-                    : HexColor(hexColor: noteService.labelColor!),
-                child: const Icon(
-                  Icons.add,
-                  size: 30,
-                  color: kBorderColorLight,
+            return DefaultTextStyle(
+              style: const TextStyle(color: const Color(0xFFFEFEFE)),
+              child: Scaffold(
+                backgroundColor: Color(0xFF1f1d2b),
+                key: _scaffoldKey,
+                drawer: SideBarDrawer(),
+                // appBar: _customAppBar(noteService),
+                floatingActionButton: FloatingActionButton(
+                  backgroundColor: (noteService.labelColor == null)
+                      ? const Color(0xFF6f6fc8)
+                      : HexColor(hexColor: noteService.labelColor!),
+                  child: const Icon(
+                    Icons.add,
+                    size: 30,
+                    color: kBorderColorLight,
+                  ),
+                  onPressed: () {
+                    //NotificationHelper.showNotification(flutterLocalNotificationsPlugin);
+                    // _showNotification();
+                    Navigator.pushNamed(context, '/note');
+                  },
                 ),
-                onPressed: () {
-                  NotificationHelper.showNotification(flutterLocalNotificationsPlugin);
-                  // _showNotification();
-                  Navigator.pushNamed(context, '/note');
-                },
-              ),
-              //body: _buildNotesView(context),
-              body: CustomScrollView(
-                physics: BouncingScrollPhysics(),
-                slivers: <Widget>[
-                  // a floating appbar
-                  SliverAppBar(
-                    floating: true,
-                    snap: true,
-                    backgroundColor: (noteService.labelColor == null)
-                        ? null
-                        : HexColor(hexColor: noteService.labelColor!),
-                    // title: _topActions(context),
-                    title: _topAppBar(context, noteService),
-                    automaticallyImplyLeading: false,
-                    centerTitle: true,
-                    titleSpacing: 0,
-                    // backgroundColor: Colors.transparent,
-                    elevation: 0,
-                  ),
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 24), // top spacing
-                  ),
+                //body: _buildNotesView(context),
+                body: CustomScrollView(
+                  physics: BouncingScrollPhysics(),
+                  slivers: <Widget>[
+                    // a floating appbar
+                    SliverAppBar(
+                      floating: true,
+                      snap: true,
+                      backgroundColor: (noteService.labelColor == null)
+                          ? null
+                          : HexColor(hexColor: noteService.labelColor!),
+                      // title: _topActions(context),
+                      title: _topAppBar(context, noteService),
+                      automaticallyImplyLeading: false,
+                      centerTitle: true,
+                      titleSpacing: 0,
+                      // backgroundColor: Colors.transparent,
+                      elevation: 0,
+                    ),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(height: 24), // top spacing
+                    ),
 
-                  _buildNotesView(context),
+                    _buildNotesView(context),
 
-                  const SliverToBoxAdapter(
-                    child: SizedBox(
-                        height:
-                            80.0), // bottom spacing make sure the content can scroll above the bottom bar
-                  ),
-                ],
+                    const SliverToBoxAdapter(
+                      child: SizedBox(
+                          height:
+                              80.0), // bottom spacing make sure the content can scroll above the bottom bar
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -172,6 +178,7 @@ class _NotesPageState extends State<NotesPage> {
 
           if (notes!.isNotEmpty != true) {
             //return DebugGrid(notes?.length, notes);
+            return NotesStagGrid(notes: notes, onTap: (note) {}, length: 0);
           }
           if (!_listView) {
             return NotesStagGrid(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// font-weight definitions
 class FontWeights {
@@ -14,6 +15,8 @@ class FontWeights {
   static const extraBold = FontWeight.w800;
   static const black = FontWeight.w900;
 }
+
+FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin1;
 
 const kBottomBarSize = 56.0;
 const kIconTintLight = Color(0xFF5F6368);
